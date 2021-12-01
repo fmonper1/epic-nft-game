@@ -16,6 +16,15 @@ export function useWallet() {
       } else {
         console.log("We have the ethereum object", ethereum);
 
+        let chainId = await ethereum.request({ method: "eth_chainId" });
+        console.log("Connected to chain " + chainId);
+
+        // String, hex code of the chainId of the Rinkebey test network
+        const rinkebyChainId = "0x4";
+        if (chainId !== rinkebyChainId) {
+          alert("You are not connected to the Rinkeby Test Network!");
+        }
+
         /*
          * Check if we're authorized to access the user's wallet
          */
