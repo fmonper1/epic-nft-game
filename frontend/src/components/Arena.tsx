@@ -6,13 +6,11 @@ import { CONTRACT_ADDRESS, transformCharacterData } from "../utils/constants";
 import myEpicGame from "../contracts/MyEpicGame.json";
 import { LoadingIndicator } from "./LoadingIndicator";
 
-/*
- * We pass in our characterNFT metadata so we can a cool card in our UI
- */
 const Arena = ({ characterNFT, setCharacterNFT }) => {
   const [gameContract, setGameContract] = useState(null);
   const [boss, setBoss] = useState(null);
   const [showToast, setShowToast] = useState(false);
+  const [mpCharacters, setMpCharacters] = useState(null);
 
   // UseEffects
   useEffect(() => {
@@ -22,18 +20,20 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
       setBoss(transformCharacterData(bossTxn));
     };
 
-    /*
-     * Setup logic when this event is fired off
-     */
+    const fetchMultiplayerCharacters = async () => {
+      const charactersTxn = await gameContract.getAllPlayers();
+      console.log("Allplayers:", charactersTxn);
+      setMpCharacters(
+        charactersTxn.map((char) => transformCharacterData(char))
+      );
+    };
+
     const onAttackComplete = (newBossHp, newPlayerHp) => {
       const bossHp = newBossHp.toNumber();
       const playerHp = newPlayerHp.toNumber();
 
       console.log(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`);
 
-      /*
-       * Update both player and boss Hp
-       */
       setBoss((prevState) => {
         return { ...prevState, hp: bossHp };
       });
@@ -45,18 +45,17 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
 
     if (gameContract) {
       fetchBoss();
+      fetchMultiplayerCharacters();
       gameContract.on("AttackComplete", onAttackComplete);
     }
 
-    /*
-     * Make sure to clean up this event when this component is removed
-     */
     return () => {
       if (gameContract) {
         gameContract.off("AttackComplete", onAttackComplete);
       }
     };
   }, [gameContract]);
+
   // UseEffects
   useEffect(() => {
     const { ethereum } = window;
@@ -76,9 +75,6 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
     }
   }, []);
 
-  /*
-   * We are going to use this to add a bit of fancy animations during attacks
-   */
   const [attackState, setAttackState] = useState<"IDLE" | "ATTACKING" | "HIT">(
     "IDLE"
   );
@@ -102,6 +98,7 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
       setAttackState("IDLE");
     }
   };
+
   return (
     <div className="arena-container">
       {boss && characterNFT && (
@@ -161,7 +158,19 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
             </div>
           </div>
         </div>
-      )}{" "}
+      )}
+      <h2>Other Characters</h2>
+      <div className="multiplayer-container">
+        {mpCharacters &&
+          mpCharacters.map((characterNFT) =>
+            characterNFT.name !== "" ? (
+              <img
+                src={`https://cloudflare-ipfs.com/ipfs/${characterNFT.imageURI}`}
+                alt={`Boss ${characterNFT.name}`}
+              />
+            ) : null
+          )}
+      </div>
     </div>
   );
 };

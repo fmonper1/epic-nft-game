@@ -266,4 +266,12 @@ contract MyEpicGame is ERC721 {
   function getBigBoss() public view returns (BigBoss memory) {
     return bigBoss;
   }
+
+  function getAllPlayers() public view returns (CharacterAttributes[] memory) {
+    CharacterAttributes[] memory ret = new CharacterAttributes[](_tokenIds.current());
+    for (uint i = 0; i < _tokenIds.current(); i++) {
+        ret[i] = nftHolderAttributes[i];
+    }
+    return ret;
+  }
 }
